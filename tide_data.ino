@@ -67,10 +67,11 @@ void setup() {
 void loop() {
      int year = 2015;
      int month = 01;
-     int day = 29;
+     int day = 30;
      String station = "FLK1301_4";
 
     tide_data.fetch_tide_data(client,station,year,month,day); 
+    tide_data.parse_tide_data(year,month,day);
     tide_data.print_event_data();
 
 }

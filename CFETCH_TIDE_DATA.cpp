@@ -80,9 +80,7 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
     last_connection_time = millis();
     client.flush();
     client.stop();
-    
-    parse_tide_data(year,month,day);
-    
+        
     return 1;
   }
 }
@@ -93,7 +91,6 @@ int CFETCH_TIDE_DATA::parse_tide_data(int Year,int  Month,int  Day)
   {
     String time = "";
     String day = "";
-
 
  
     int length = events[i].length();
@@ -133,11 +130,12 @@ int CFETCH_TIDE_DATA::parse_tide_data(int Year,int  Month,int  Day)
   return 0;
 }
 
-
+  
 void CFETCH_TIDE_DATA::print_event_data()
 {
   if((millis() - last_print_time) > 25000)
   {
+  Serial.println("Day , time(24hr) , type 0=ebb 1=slack 2=flood , rate");
   for(int x = 0; x < max_events;x++)
   {
     String  print_string = "";

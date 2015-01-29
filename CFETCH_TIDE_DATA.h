@@ -30,15 +30,15 @@ class CFETCH_TIDE_DATA
         
         void print_event_data();
         
-        float string_to_float(String & parse_string,int  offset)
+        float string_to_float(String parse_string,int  offset)
         {
             char float_buffer[10];
             String rate= "";
-            for(int u = offset; u < parse_string.length();u++)
+            for(int u = offset; u <= parse_string.length();u++)
             {
               rate += parse_string.charAt(u);
             }
-            rate.toCharArray(float_buffer, 10);
+            rate.toCharArray(float_buffer,10);
             return(atof(float_buffer));
         }
         
