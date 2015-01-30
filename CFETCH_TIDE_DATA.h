@@ -54,6 +54,7 @@ class CFETCH_TIDE_DATA
 
             event_hour[i] = hour.toInt();
             event_minute[i] = minute.toInt();
+            time_in_minutes[i] = (event_hour[i] * 60) + event_minute[i];
         }
 
 
@@ -90,6 +91,7 @@ class CFETCH_TIDE_DATA
         int event_type_data[max_events] = {0};//type 0=ebb 1=slack 2=flood
         float event_rate_data[max_events];// rate
         int event_level_data[max_events] ={0};//current sea level
+        int time_in_minutes[max_events] = {0};
 
         unsigned long last_print_time;
         unsigned long last_connection_time;

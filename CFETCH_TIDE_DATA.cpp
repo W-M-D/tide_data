@@ -151,6 +151,9 @@ void CFETCH_TIDE_DATA::print_event_data()
       print_string += " , ";
       print_string += event_type_data[x];//type 0=ebb 1=slack 2=flood
       print_string += " , ";
+      print_string += time_in_minutes[x];
+      print_string += " , ";
+
       //print_string += " , ";
       //print_string += event_level_data[x];//current sea level
       Serial.print(print_string);
