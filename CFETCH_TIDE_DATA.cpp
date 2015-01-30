@@ -62,8 +62,7 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
         {
           if(tide_data.startsWith(Year))
           {
-            events[p] = tide_data;
-            p++;
+            parse_tide_data(tide_data,year,month,day);
           }
           tide_data = "";
         }
@@ -78,6 +77,7 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
       return -1;
     }
     last_connection_time = millis();
+
     client.flush();
     client.stop();
 
@@ -85,43 +85,43 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
   }
 }
 
-int CFETCH_TIDE_DATA::parse_tide_data(int Year,int  Month,int  Day)
+int CFETCH_TIDE_DATA::parse_tide_data(String & tide_data ,int Year,int  Month,int  Day)
 {
-  for( int i = 0; i < max_events; i++)
-  {
+    static int i;
+    if(i == max_events)
+    {
+        i = 0;
+    }
+    i++;
     String time = "";
     String day = "";
 
 
-    int length = events[i].length();
-    if(length > 24)
+
+    day += tide_data.charAt(8);
+    day += tide_data.charAt(9);
+
+    event_day_data[i] = day.toInt();
+
+    parse_time(tide_data,11,i);
+
+
+    if(tide_data.charAt(18) == 'e')
     {
-      day += events[i].charAt(8);
-      day += events[i].charAt(9);
-
-      event_day_data[i] = day.toInt();
-
-      parse_time(events[i],11,i);
-
-
-      if(events[i].charAt(18) == 'e')
-      {
-        event_type_data[i] = 0;
-        event_rate_data[i] = string_to_float(events[i],23);
-      }
-      else if(events[i].charAt(18) == 's')
-      {
-        event_type_data[i] = 1;
-      }
-      else if(events[i].charAt(18) == 'f')
-      {
-        event_type_data[i] = 2;
-        event_rate_data[i] = string_to_float(events[i],25);
-      }
+    event_type_data[i] = 0;
+    event_rate_data[i] = string_to_float(tide_data,23);
     }
-    events[i]="";
-  }
-  return 0;
+    else if(tide_data.charAt(18) == 's')
+    {
+    event_type_data[i] = 1;
+    }
+    else if(tide_data.charAt(18) == 'f')
+    {
+    event_type_data[i] = 2;
+    event_rate_data[i] = string_to_float(tide_data,25);
+    }
+    tide_data="";
+    return 0;
 }
 
 
@@ -129,38 +129,41 @@ void CFETCH_TIDE_DATA::print_event_data()
 {
   if((millis() - last_print_time) > 25000)
   {
-  Serial.println("Day , time(24hr) , type 0=ebb 1=slack 2=flood , rate");
-  for(int x = 0; x < max_events;x++)
+  Serial.println("Day , time(24hr) , type 0=ebb 1=slack 2=flood , minutes((hours*60) + minutes) rate");
+  Serial.println("*******************************");
+  for(int x = 0; x <= max_events;x++)
   {
     String  print_string = "";
     if(event_day_data[x])
     {
-      print_string += event_day_data[x];
-      print_string += " , ";
+      Serial.print(event_day_data[x]);
+      Serial.print(" , ");
       if(event_hour[x] < 10)
       {
-          print_string += '0';
+          Serial.print('0');
       }
-      print_string += event_hour[x];//day,time(mil),
-      print_string += ':';
+      Serial.print(event_hour[x]);//day,time(mil),
+      Serial.print(':');
       if(event_minute[x] < 10)
       {
-          print_string += '0';
+          Serial.print('0');
       }
-      print_string += event_minute[x];
-      print_string += " , ";
-      print_string += event_type_data[x];//type 0=ebb 1=slack 2=flood
-      print_string += " , ";
-      print_string += time_in_minutes[x];
-      print_string += " , ";
+      Serial.print(event_minute[x]);
+      Serial.print(" , ");
+      Serial.print(event_type_data[x]);//type 0=ebb 1=slack 2=flood
+      Serial.print(" , ");
+      Serial.print(time_in_minutes[x]);
+      Serial.print(" , ");
 
       //print_string += " , ";
       //print_string += event_level_data[x];//current sea level
-      Serial.print(print_string);
-      Serial.println(event_rate_data[x]);
+      Serial.print(event_rate_data[x]);
+      Serial.print(" , ///");
+      Serial.println(x);
     }
   }
-  Serial.println("**************************************");
+  Serial.println("*******************************");
+
   last_print_time = millis();
   }
 }

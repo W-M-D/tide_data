@@ -24,7 +24,7 @@ class CFETCH_TIDE_DATA
 
         Returns how many events were parsed
         */
-        int parse_tide_data(int  year,int  month,int  day);
+        int parse_tide_data(String & tide_data,int  year,int  month,int  day);
 
         int clock12_to_clock24(String time,String period);
 
@@ -80,17 +80,17 @@ class CFETCH_TIDE_DATA
         int m_current_lat;
         int m_current_lon;
         const static int max_events =16;
-        int m_max_tide;
-        int m_min_tide;
+        uint8_t m_max_tide;
+        uint8_t m_min_tide;
         String base_url = "tidesandcurrents.noaa.gov";
 
-        String events[max_events];
-        int event_day_data[max_events] = {0};
-        int event_minute[max_events] = {0};//time(mil)minute
-        int event_hour[max_events] = {0};//time(mil) hour
-        int event_type_data[max_events] = {0};//type 0=ebb 1=slack 2=flood
+        String events;
+        uint8_t event_day_data[max_events] = {0};
+        uint8_t event_minute[max_events] = {0};//time(mil)minute
+        uint8_t event_hour[max_events] = {0};//time(mil) hour
+        uint8_t event_type_data[max_events] = {0};//type 0=ebb 1=slack 2=flood
         float event_rate_data[max_events];// rate
-        int event_level_data[max_events] ={0};//current sea level
+        uint8_t event_level_data[max_events] ={0};//current sea level
         int time_in_minutes[max_events] = {0};
 
         unsigned long last_print_time;

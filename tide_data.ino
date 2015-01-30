@@ -1,16 +1,16 @@
 /*
   Repeating Wifi Web client
- 
+
  This sketch connects to a a web server and makes a request
  using an Arduino Wifi shield.
- 
+
  Circuit:
  * Wifi shield attached to pins 10, 11, 12, 13
- 
+
  created 23 April 2012
  modifide 31 May 2012
  by Tom Igoe
- 
+
  http://arduino.cc/en/Tutorial/WifiWebClientRepeating
  This code is in the public domain.
  */
@@ -18,7 +18,7 @@
 #include <SPI.h>
 #include <WiFi.h>
 #include "CFETCH_TIDE_DATA.h"
-char ssid[] = "";      //  your network SSID (name) 
+char ssid[] = "";      //  your network SSID (name)
 char pass[] = "";   // your network password
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
@@ -38,28 +38,28 @@ const unsigned long postingInterval = 10*1000;  // delay between updates, in mil
 
 void setup() {
   //Initialize serial and wait for port to open:
-  Serial.begin(9600); 
+  Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
-  
+
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
-    Serial.println("WiFi shield not present"); 
+    Serial.println("WiFi shield not present");
     // don't continue:
     while(true);
-  } 
-  
+  }
+
   // attempt to connect to Wifi network:
-  while ( status != WL_CONNECTED) { 
+  while ( status != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
-    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:    
+    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid, pass);
 
     // wait 10 seconds for connection:
     delay(10000);
-  } 
+  }
   // you're connected now, so print out the status:
   printWifiStatus();
 }
@@ -70,8 +70,7 @@ void loop() {
      int day = 30;
      String station = "FLK1301_4";
 
-    tide_data.fetch_tide_data(client,station,year,month,day); 
-    tide_data.parse_tide_data(year,month,day);
+    tide_data.fetch_tide_data(client,station,year,month,day);
     tide_data.print_event_data();
 
 }
