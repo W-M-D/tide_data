@@ -18,7 +18,7 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
 
 
     csv_URL += "GET ";
-    csv_URL += "/noaacurrents/"; 
+    csv_URL += "/noaacurrents/";
     csv_URL += "DownloadPredictions";
     csv_URL += "?fmt=csv"; // CSV format
     csv_URL += "&d="; // date
@@ -27,7 +27,7 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
     csv_URL += '-';
     if(month < 10)
     {
-      csv_URL += "0"; // formating 
+      csv_URL += "0"; // formating
     }
     csv_URL += month;
 
@@ -38,9 +38,9 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
     }
     csv_URL += day;
 
-    csv_URL += "&id="; 
+    csv_URL += "&id=";
     csv_URL += weather_station; //Weather station ID
-    csv_URL += "&t=24hr"; // 24 HOUR TIME  
+    csv_URL += "&t=24hr"; // 24 HOUR TIME
     csv_URL += "&i="; //Data Interval can be 60min 30min 6min if blank returns max/min/slack
 
     Serial.println(csv_URL);
@@ -80,7 +80,7 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
     last_connection_time = millis();
     client.flush();
     client.stop();
-        
+
     return 1;
   }
 }
@@ -92,23 +92,17 @@ int CFETCH_TIDE_DATA::parse_tide_data(int Year,int  Month,int  Day)
     String time = "";
     String day = "";
 
- 
+
     int length = events[i].length();
     if(length > 24)
     {
       day += events[i].charAt(8);
       day += events[i].charAt(9);
-      //Serial.print("Day : ");
-      //Serial.println(day);       
+
       event_day_data[i] = day.toInt();
 
-      time += events[i].charAt(11);
-      time += events[i].charAt(12);
-      time += events[i].charAt(14);
-      time += events[i].charAt(15);
-      //Serial.print("Time : ");
-      //Serial.println(time);
-      event_time_data[i] = time.toInt();
+      parse_time(events[i],11,i);
+
 
       if(events[i].charAt(18) == 'e')
       {
@@ -130,7 +124,7 @@ int CFETCH_TIDE_DATA::parse_tide_data(int Year,int  Month,int  Day)
   return 0;
 }
 
-  
+
 void CFETCH_TIDE_DATA::print_event_data()
 {
   if((millis() - last_print_time) > 25000)
@@ -140,15 +134,25 @@ void CFETCH_TIDE_DATA::print_event_data()
   {
     String  print_string = "";
     if(event_day_data[x])
-    {    
+    {
       print_string += event_day_data[x];
-      print_string += " , "; 
-      print_string += event_time_data[x];//day,time(mil),
-      print_string += " , "; 
+      print_string += " , ";
+      if(event_hour[x] < 10)
+      {
+          print_string += '0';
+      }
+      print_string += event_hour[x];//day,time(mil),
+      print_string += ':';
+      if(event_minute[x] < 10)
+      {
+          print_string += '0';
+      }
+      print_string += event_minute[x];
+      print_string += " , ";
       print_string += event_type_data[x];//type 0=ebb 1=slack 2=flood
-      print_string += " , "; 
-      //print_string += " , "; 
-      //print_string += event_level_data[x];//current sea level 
+      print_string += " , ";
+      //print_string += " , ";
+      //print_string += event_level_data[x];//current sea level
       Serial.print(print_string);
       Serial.println(event_rate_data[x]);
     }
