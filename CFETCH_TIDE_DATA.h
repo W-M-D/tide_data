@@ -26,7 +26,29 @@ class CFETCH_TIDE_DATA
         */
         int parse_tide_data(String & tide_data,int  year,int  month,int  day);
 
-        int clock12_to_clock24(String time,String period);
+        int clock12_to_clock24(String time,String period); //returns 0 if falling 1 if rising and -1 if unknown
+
+        int tide_rising_or_falling()
+        {
+          if(last_tide_level > event_level_data)
+          {
+              return 0;
+          }
+          else if(last_tide_level < event_level_data)
+          {
+              return 1;
+          }
+          else
+          {
+              return -1;
+          }
+        }
+
+        int tide_percent_level() // returns % of max tide
+        {
+           int y = map(event_level_data*100,min_tide_level*100,max_tide_level*100,0,100);
+           return y;
+        }
 
         void print_event_data();
 
@@ -42,7 +64,7 @@ class CFETCH_TIDE_DATA
             return(atof(float_buffer));
         }
 
-        void parse_time(String parse_string,int offset, int i)
+        void parse_time(String parse_string,int offset)
         {
             String minute = "";
             String hour = "";
@@ -51,10 +73,8 @@ class CFETCH_TIDE_DATA
             hour += parse_string.charAt(offset + 1);
             minute += parse_string.charAt(offset +3);
             minute += parse_string.charAt(offset + 4);
-
-            event_hour[i] = hour.toInt();
-            event_minute[i] = minute.toInt();
-            time_in_minutes[i] = (event_hour[i] * 60) + event_minute[i];
+            event_hour = hour.toInt();
+            event_minute = minute.toInt();
         }
 
 
@@ -79,19 +99,15 @@ class CFETCH_TIDE_DATA
         String m_station_id;
         int m_current_lat;
         int m_current_lon;
-        const static int max_events =16;
-        uint8_t m_max_tide;
-        uint8_t m_min_tide;
+        double max_tide_level;
+        double min_tide_level;
+        double last_tide_level;
         String base_url = "tidesandcurrents.noaa.gov";
 
-        String events;
-        uint8_t event_day_data[max_events] = {0};
-        uint8_t event_minute[max_events] = {0};//time(mil)minute
-        uint8_t event_hour[max_events] = {0};//time(mil) hour
-        uint8_t event_type_data[max_events] = {0};//type 0=ebb 1=slack 2=flood
-        float event_rate_data[max_events];// rate
-        uint8_t event_level_data[max_events] ={0};//current sea level
-        int time_in_minutes[max_events] = {0};
+        uint8_t event_day_data;
+        uint8_t event_minute;//time(mil)minute
+        uint8_t event_hour;//time(mil) hour
+        double event_level_data;// rate
 
         unsigned long last_print_time;
         unsigned long last_connection_time;

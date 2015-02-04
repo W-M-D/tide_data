@@ -13,55 +13,37 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
     char baseurl[30];
     String Year;
     String tide_data = "";
-
     base_url.toCharArray(baseurl,30);
-
-
     csv_URL += "GET ";
-    csv_URL += "/noaacurrents/";
-    csv_URL += "DownloadPredictions";
-    csv_URL += "?fmt=csv"; // CSV format
-    csv_URL += "&d="; // date
-    csv_URL += year;
 
-    csv_URL += '-';
-    if(month < 10)
-    {
-      csv_URL += "0"; // formating
-    }
-    csv_URL += month;
-
-    csv_URL += '-';
-    if(day < 10)
-    {
-      csv_URL += "0"; // formating
-    }
-    csv_URL += day;
-
-    csv_URL += "&id=";
-    csv_URL += weather_station; //Weather station ID
-    csv_URL += "&t=24hr"; // 24 HOUR TIME
-    csv_URL += "&i="; //Data Interval can be 60min 30min 6min if blank returns max/min/slack
+    csv_URL += "/api/datagetter";
+    csv_URL += "?product=water_level";
+    csv_URL += "&date=today";
+    csv_URL += "&application=NOS.COOPS.TAC.WL";
+    csv_URL += "&datum=MHHW";
+    csv_URL += "&station=8723214";
+    csv_URL += "&time_zone=lst";
+    csv_URL += "&units=metric";
+    csv_URL += "&interval=h";
+    csv_URL += "&format=csv";
 
     Serial.println(csv_URL);
 
-    // /noaacurrents/DownloadPredictions?fmt=csv&d=2015-01-23&id=FLK1302_6&t=24hr
-
+        //           8723214
     Year += year; // puts the year into a string for parsing
     if(client.connect(baseurl,80))
     {
       client.println(csv_URL);
-      int p = 0;
       delay(10000);
-      while (client.available())
+      while ( client.available())
       {
         char c = client.read();
-
         tide_data += c;
         if(c == '\n')
         {
           if(tide_data.startsWith(Year))
           {
+            last_tide_level = event_level_data;
             parse_tide_data(tide_data,year,month,day);
           }
           tide_data = "";
@@ -77,7 +59,6 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
       return -1;
     }
     last_connection_time = millis();
-
     client.flush();
     client.stop();
 
@@ -87,39 +68,32 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
 
 int CFETCH_TIDE_DATA::parse_tide_data(String & tide_data ,int Year,int  Month,int  Day)
 {
-    static int i;
-    if(i == max_events)
-    {
-        i = 0;
-    }
-    i++;
+    int tab_offset = 0 ;
     String time = "";
     String day = "";
 
+    tab_offset = tide_data.indexOf('-');
+    tab_offset = tide_data.indexOf('-',tab_offset + 1);
 
+    day += tide_data.charAt(tab_offset + 1);
+    day += tide_data.charAt(tab_offset + 2);
+    event_day_data = day.toInt();
 
-    day += tide_data.charAt(8);
-    day += tide_data.charAt(9);
+    tab_offset = tide_data.indexOf(' ',tab_offset + 1);
+    parse_time(tide_data,tab_offset + 1 );
 
-    event_day_data[i] = day.toInt();
+    tab_offset = tide_data.indexOf(',',tab_offset +1);
+    event_level_data = string_to_float(tide_data,tab_offset + 1);
 
-    parse_time(tide_data,11,i);
-
-
-    if(tide_data.charAt(18) == 'e')
+    if(event_level_data > max_tide_level)
     {
-    event_type_data[i] = 0;
-    event_rate_data[i] = string_to_float(tide_data,23);
+        max_tide_level = event_level_data;
     }
-    else if(tide_data.charAt(18) == 's')
+    if(event_level_data < min_tide_level)
     {
-    event_type_data[i] = 1;
+        min_tide_level = event_level_data;
     }
-    else if(tide_data.charAt(18) == 'f')
-    {
-    event_type_data[i] = 2;
-    event_rate_data[i] = string_to_float(tide_data,25);
-    }
+
     tide_data="";
     return 0;
 }
@@ -129,39 +103,52 @@ void CFETCH_TIDE_DATA::print_event_data()
 {
   if((millis() - last_print_time) > 25000)
   {
-  Serial.println("Day , time(24hr) , type 0=ebb 1=slack 2=flood , minutes((hours*60) + minutes) rate");
+  Serial.println("Day , time(24hr) , level");
   Serial.println("*******************************");
-  for(int x = 0; x <= max_events;x++)
-  {
-    String  print_string = "";
-    if(event_day_data[x])
-    {
-      Serial.print(event_day_data[x]);
-      Serial.print(" , ");
-      if(event_hour[x] < 10)
-      {
-          Serial.print('0');
-      }
-      Serial.print(event_hour[x]);//day,time(mil),
-      Serial.print(':');
-      if(event_minute[x] < 10)
-      {
-          Serial.print('0');
-      }
-      Serial.print(event_minute[x]);
-      Serial.print(" , ");
-      Serial.print(event_type_data[x]);//type 0=ebb 1=slack 2=flood
-      Serial.print(" , ");
-      Serial.print(time_in_minutes[x]);
-      Serial.print(" , ");
 
-      //print_string += " , ";
-      //print_string += event_level_data[x];//current sea level
-      Serial.print(event_rate_data[x]);
-      Serial.print(" , ///");
-      Serial.println(x);
-    }
+  Serial.print(event_day_data);
+
+  Serial.print(" , ");
+  if(event_hour < 10)
+  {
+      Serial.print('0');
   }
+  Serial.print(event_hour);//day,time(mil),
+  Serial.print(':');
+  if(event_minute < 10)
+  {
+      Serial.print('0');
+  }
+  Serial.print(event_minute);
+
+  Serial.print(" , ");
+  Serial.println(event_level_data);
+
+  Serial.print("Max tide level: ");
+  Serial.println(max_tide_level);
+
+  Serial.print("Min tide level: ");
+  Serial.println(min_tide_level);
+
+  Serial.print("Last tide level:");
+  Serial.println(last_tide_level);
+
+  Serial.print("Tide %:");
+  Serial.println(tide_percent_level());
+
+  if(tide_rising_or_falling() == 0)
+  {
+      Serial.println("Tide is falling!");
+  }
+  else if(tide_rising_or_falling() == 1)
+  {
+      Serial.println("Tide is rising!");
+  }
+  else
+  {
+      Serial.println("Tide unchanged since last reading!");
+  }
+
   Serial.println("*******************************");
 
   last_print_time = millis();
