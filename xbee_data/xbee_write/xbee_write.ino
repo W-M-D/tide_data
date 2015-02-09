@@ -13,9 +13,26 @@ void setup()
 
 void loop()
 {
-  data.Settemperature(random(-30,120));
-  data.Sethumidity(random(0,100));
-  data.Setwind_speed(random(0,200));
-  data.Setwind_direction(random(0,360));
+  int t = random(-30,120);
+  int h = random(0,100);
+  int s = random(0,200);
+  int d = random(0,360);
+  
+  data.Settemperature(t);
+  Serial.print("Temperature :");
+  Serial.println(t);
+  
+  data.Sethumidity(h);
+  Serial.print("humidity :");
+  Serial.println(h);
+  
+  data.Setwind_speed(s);
+  Serial.print("wind_speed :");
+  Serial.println(s);
+  
+  data.Setwind_direction(d);
+  Serial.print("wind_direction :");
+  Serial.println(d);
+  Serial.println();
   data.send_data(XBee);
 }

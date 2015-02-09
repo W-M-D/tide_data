@@ -12,10 +12,20 @@ class xb_data
 
         ~xb_data();
 
-
+        /*Creates a checksum by adding temperature ,humidity ,wind_speed and ,wind_direction
+        returns the checksum int or -1 if the checksum int == 0 to prevent empty checksums from passing
+        */
         int create_checksum(int temperature,int humidity,int wind_speed,int wind_direction);
+     
+        /*
+        Checks a checksum by adding the perature ,humidity ,wind_speed and ,wind_direction and comparing it to the checksum
+        */
         bool check_checksum(int temperature,int humidity,int wind_speed,int wind_direction, int checksum);
         
+        /*
+        parses an int out of a csv string
+        returns the parsed int and modifies string_offset by reference 
+        */
         int parse_CSV(String data_string, int & string_offset)
         {
           int offset = 0; 
@@ -29,7 +39,20 @@ class xb_data
           return int_string.toInt();
         }
         
+        /*
+        Reads the incomming bytes from the XBee and parses them into their respective fields 
+        returns 1 on success -1 if the checksum is bad and -2 if the data is bad
+        */
         int read_incomming(SoftwareSerial &XBee);
+        
+        /*
+        Creates a string that will be sent via the XBee one char at a time
+       
+        the string follows this format
+        @,temperature,humidity,wind_speed,wind_direction,checksum,^
+        
+        the sending delay per char is set in the constructor 
+        */
         int send_data(SoftwareSerial &XBee);
         
         int Gettemperature() { return m_temperature; }

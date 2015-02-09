@@ -28,7 +28,13 @@ int xb_data::read_incomming(SoftwareSerial &XBee)
   
   start_char_offset = datas_string.lastIndexOf(start_char);
   end_char_offset = datas_string.lastIndexOf(end_char);
-  if(end_char_offset > start_char_offset)
+ 
+  if(start_char_offset == -1 || datas_string.length() > 50) // check to see if there is a start char 
+  {
+    datas_string = "";
+    return -2;
+  }
+  if(end_char_offset > start_char_offset) // checks to see if the end char is after the start char
   {
     start_char_offset = datas_string.lastIndexOf(start_char,start_char_offset - 1);
   }
@@ -38,6 +44,7 @@ int xb_data::read_incomming(SoftwareSerial &XBee)
   wind_speed = parse_CSV(datas_string, start_char_offset);
   wind_direction = parse_CSV(datas_string, start_char_offset);
   checksum = parse_CSV(datas_string, start_char_offset);
+
   
   if(check_checksum(temperature,humidity,wind_speed,wind_direction,checksum))
   {
