@@ -2,10 +2,11 @@
 
 CFETCH_TIDE_DATA::CFETCH_TIDE_DATA(int update_delay)
 {
+  base_url = "tidesandcurrents.noaa.gov";
   UPDATE_DELAY = update_delay;//ctor
 }
 
-int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station,int  year,int month,int day)
+int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station,int  year)
 {
   if(!client.connected() && ((millis() - last_connection_time) > UPDATE_DELAY))
   {
@@ -44,7 +45,7 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
           if(tide_data.startsWith(Year))
           {
             last_tide_level = event_level_data;
-            parse_tide_data(tide_data,year,month,day);
+            parse_tide_data(tide_data,year);
           }
           tide_data = "";
         }
@@ -66,7 +67,7 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
   }
 }
 
-int CFETCH_TIDE_DATA::parse_tide_data(String & tide_data ,int Year,int  Month,int  Day)
+int CFETCH_TIDE_DATA::parse_tide_data(String & tide_data ,int Year)
 {
     int tab_offset = 0 ;
     String time = "";
