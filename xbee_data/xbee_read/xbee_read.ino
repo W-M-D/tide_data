@@ -13,7 +13,7 @@ void setup()
 
 void loop()
 {
-  if(data.read_incomming(XBee))
+  if(data.read_incomming(XBee) == 1)
   {
     Serial.print("Temperature :");
     Serial.println(data.Gettemperature());
@@ -27,6 +27,8 @@ void loop()
     Serial.print("wind_direction :");
     Serial.println(data.Getwind_direction());
     Serial.println();
+    
+    Serial.println("***************************************");
   }
   
 }

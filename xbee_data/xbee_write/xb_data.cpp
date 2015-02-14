@@ -25,19 +25,18 @@ int xb_data::read_incomming(SoftwareSerial &XBee)
     char c =  XBee.read();
     datas_string += c;
   }
+  end_char_offset = datas_string.lastIndexOf(end_char);  
+  start_char_offset = datas_string.lastIndexOf(start_char,end_char_offset - 2);
   
-  start_char_offset = datas_string.lastIndexOf(start_char);
-  end_char_offset = datas_string.lastIndexOf(end_char);
- 
-  if(start_char_offset == -1 || datas_string.length() > 50) // check to see if there is a start char 
+  if(end_char_offset == -1 || start_char_offset == -1) {return -3;}
+  
+  if(datas_string.length() > 50) 
   {
     datas_string = "";
     return -2;
   }
-  if(end_char_offset > start_char_offset) // checks to see if the end char is after the start char
-  {
-    start_char_offset = datas_string.lastIndexOf(start_char,start_char_offset - 1);
-  }
+  
+
   
   temperature = parse_CSV(datas_string, start_char_offset);
   humidity = parse_CSV(datas_string, start_char_offset);
@@ -97,8 +96,9 @@ int xb_data::create_checksum(int temperature,int humidity,int wind_speed,int win
   checksum += humidity;
   checksum += wind_speed;
   checksum += wind_direction;
+  
   if(checksum == 0){return -1;}
-  return checksum;
+  else{return checksum;}
 }
 
 
@@ -111,6 +111,13 @@ bool xb_data::check_checksum(int temperature,int humidity,int wind_speed,int win
    }
    else
    {
+     /*
+     Serial.print("Checksum a : ");
+     Serial.println(create_checksum(temperature,humidity,wind_speed,wind_direction));
+     Serial.print("Checksum b : ");
+     Serial.println(checksum);
+     Serial.println();
+    */
      return false;
    }
 }

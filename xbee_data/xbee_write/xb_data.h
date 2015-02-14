@@ -32,7 +32,7 @@ class xb_data
           String int_string = "";
           offset = data_string.indexOf(',',string_offset);
           string_offset = data_string.indexOf(',',offset + 1);
-          for(int i = offset + 1; i <= string_offset; i ++)
+          for(int i = offset + 1; i < string_offset; i ++)
           {
             int_string += data_string.charAt(i);
           }
