@@ -3,99 +3,95 @@
 CFETCH_TIDE_DATA::CFETCH_TIDE_DATA(int update_delay)
 {
   UPDATE_DELAY = update_delay;//ctor
+  base_url = "tidesandcurrents.noaa.gov";
 }
 
-int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station,int  year,int month,int day)
+int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station,int  year)
 {
   if(!client.connected() && ((millis() - last_connection_time) > UPDATE_DELAY))
   {
+
     String csv_URL;
-    char baseurl[30];
+    char baseurl [] = "tidesandcurrents.noaa.gov";
     String Year;
     String tide_data = "";
-    base_url.toCharArray(baseurl,30);
-    csv_URL += "GET ";
-
-    csv_URL += "/api/datagetter";
-    csv_URL += "?product=water_level";
-    csv_URL += "&date=today";
-    csv_URL += "&application=NOS.COOPS.TAC.WL";
-    csv_URL += "&datum=MHHW";
-    csv_URL += "&station=8723214";
-    csv_URL += "&time_zone=lst";
-    csv_URL += "&units=metric";
-    csv_URL += "&interval=h";
-    csv_URL += "&format=csv";
-
-    Serial.println(csv_URL);
-
-        //           8723214
-    Year += year; // puts the year into a string for parsing
+   
+    client.flush();
+    client.stop();
     if(client.connect(baseurl,80))
     {
-      client.println(csv_URL);
-      delay(10000);
-      while ( client.available())
-      {
-        char c = client.read();
-        tide_data += c;
-        if(c == '\n')
-        {
-          if(tide_data.startsWith(Year))
-          {
-            last_tide_level = event_level_data;
-            parse_tide_data(tide_data,year,month,day);
-          }
-          tide_data = "";
-        }
-      }
+      client.print( "GET ");
+
+      client.print( "/api/datagetter");
+      client.print( "?product=water_level");
+      client.print( "&date=today");
+      client.print( "&application=NOS.COOPS.TAC.WL");
+      client.print( "&datum=MHHW");
+      client.print( "&station=8723214");
+      client.print( "&time_zone=lst");
+      client.print( "&units=metric");
+      client.print( "&interval=h");
+      client.print( "&format=csv");
+      client.println();
     }
     else
     {
       Serial.println("could not connect to server");
       last_connection_time = millis();
-      client.flush();
-      client.stop();
       return -1;
     }
     last_connection_time = millis();
-    client.flush();
-    client.stop();
+
 
     return 1;
   }
 }
 
-int CFETCH_TIDE_DATA::parse_tide_data(String & tide_data ,int Year,int  Month,int  Day)
+int CFETCH_TIDE_DATA::parse_tide_data(WiFiClient & client)
 {
-    int tab_offset = 0 ;
-    String time = "";
-    String day = "";
-
-    tab_offset = tide_data.indexOf('-');
-    tab_offset = tide_data.indexOf('-',tab_offset + 1);
-
-    day += tide_data.charAt(tab_offset + 1);
-    day += tide_data.charAt(tab_offset + 2);
-    event_day_data = day.toInt();
-
-    tab_offset = tide_data.indexOf(' ',tab_offset + 1);
-    parse_time(tide_data,tab_offset + 1 );
-
-    tab_offset = tide_data.indexOf(',',tab_offset +1);
-    event_level_data = string_to_float(tide_data,tab_offset + 1);
-
-    if(event_level_data > max_tide_level)
+  int lines = 0;
+  String day;
+  String tide_data;
+  while ( client.available())
+  {
+    char c = client.read();
+    tide_data += c;
+    if(c == '\n')
     {
-        max_tide_level = event_level_data;
-    }
-    if(event_level_data < min_tide_level)
-    {
-        min_tide_level = event_level_data;
-    }
+      lines++;
+      if(tide_data.startsWith("2"))
+      {
+        last_tide_level = event_level_data;
 
-    tide_data="";
-    return 0;
+        int tab_offset = 0 ;
+    
+        tab_offset = tide_data.indexOf('-');
+        tab_offset = tide_data.indexOf('-',tab_offset + 1);
+    
+        day += tide_data.charAt(tab_offset + 1);
+        day += tide_data.charAt(tab_offset + 2);
+        event_day_data = day.toInt();
+    
+        tab_offset = tide_data.indexOf(' ',tab_offset + 1);
+        parse_time(tide_data,tab_offset + 1 );
+    
+        tab_offset = tide_data.indexOf(',',tab_offset +1);
+        event_level_data = string_to_float(tide_data,tab_offset + 1);
+    
+        if(event_level_data > max_tide_level)
+        {
+            max_tide_level = event_level_data;
+        }
+        if(event_level_data < min_tide_level)
+        {
+            min_tide_level = event_level_data;
+        }
+
+      }
+      tide_data = "";
+    }
+  }    
+  return lines;
 }
 
 

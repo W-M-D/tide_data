@@ -15,7 +15,7 @@ class CFETCH_TIDE_DATA
         Returns -1 on failure to connect.
         Returns 1 on success
         */
-        int fetch_tide_data(WiFiClient & client,String weather_station,int  year,int month,int day);
+        int fetch_tide_data(WiFiClient & client,String weather_station,int  year);
 
 
         /*
@@ -24,7 +24,7 @@ class CFETCH_TIDE_DATA
 
         Returns how many events were parsed
         */
-        int parse_tide_data(String & tide_data,int  year,int  month,int  day);
+        int parse_tide_data(WiFiClient & client);
 
         int clock12_to_clock24(String time,String period); //returns 0 if falling 1 if rising and -1 if unknown
 
@@ -87,8 +87,7 @@ class CFETCH_TIDE_DATA
         void Setcurrent_lat(int val) { m_current_lat = val; }
         int Getcurrent_lon() { return m_current_lon; }
         void Setcurrent_lon(int val) { m_current_lon = val; }
-        String Getbase_url() { return base_url; }
-        void Setbase_url(String val) { base_url = val; }
+
 
 
 
@@ -102,7 +101,7 @@ class CFETCH_TIDE_DATA
         double max_tide_level;
         double min_tide_level;
         double last_tide_level;
-        String base_url = "tidesandcurrents.noaa.gov";
+        String base_url;
 
         uint8_t event_day_data;
         uint8_t event_minute;//time(mil)minute

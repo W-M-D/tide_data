@@ -29,7 +29,6 @@ CFETCH_TIDE_DATA tide_data(25000);
 WiFiClient client;
 
 // server address:
-char server[] = "www.arduino.cc";
 //IPAddress server(64,131,82,241);
 
 unsigned long lastConnectionTime = 0;           // last time you connected to the server, in milliseconds
@@ -58,7 +57,7 @@ void setup() {
     status = WiFi.begin(ssid, pass);
 
     // wait 10 seconds for connection:
-    delay(10000);
+    delay(15000);
   }
   // you're connected now, so print out the status:
   printWifiStatus();
@@ -70,7 +69,8 @@ void loop() {
      int day = 30;
      String station = "FLK1301_4";
 
-    tide_data.fetch_tide_data(client,station,year,month,day);
+    tide_data.fetch_tide_data(client,station,year);
+    tide_data.parse_tide_data(client);
     tide_data.print_event_data();
 
 }
