@@ -46,7 +46,7 @@ class CFETCH_TIDE_DATA
 
         int tide_percent_level() // returns % of max tide
         {
-           int y = map(event_level_data*100,min_tide_level*100,max_tide_level*100,0,100);
+           int y = map(event_level_data*1000,min_tide_level*1000,max_tide_level*1000,0,100);
            return y;
         }
 
@@ -56,8 +56,12 @@ class CFETCH_TIDE_DATA
         {
             char float_buffer[10];
             String rate= "";
-            for(int u = offset; u <= parse_string.length();u++)
+            for(int u = offset; u < parse_string.length();u++)
             {
+              if(parse_string.charAt(u) == ',')
+              {
+                break;
+              }
               rate += parse_string.charAt(u);
             }
             rate.toCharArray(float_buffer,10);
@@ -101,14 +105,14 @@ class CFETCH_TIDE_DATA
         double max_tide_level;
         double min_tide_level;
         double last_tide_level;
-        String base_url;
 
         uint8_t event_day_data;
         uint8_t event_minute;//time(mil)minute
         uint8_t event_hour;//time(mil) hour
         double event_level_data;// rate
+       
+        unsigned long timer = 0;
 
-        unsigned long last_print_time;
         unsigned long last_connection_time;
         unsigned long UPDATE_DELAY;
 };

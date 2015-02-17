@@ -1,23 +1,24 @@
 #include "CFETCH_TIDE_DATA.h"
-
+//1.0.6
 CFETCH_TIDE_DATA::CFETCH_TIDE_DATA(int update_delay)
 {
   UPDATE_DELAY = update_delay;//ctor
-  base_url = "tidesandcurrents.noaa.gov";
+  last_connection_time = millis();
 }
 
 int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station,int  year)
 {
-  if(!client.connected() && ((millis() - last_connection_time) > UPDATE_DELAY))
-  {
+  if(!client.connected())
+  {    
+    timer = millis();
+
 
     String csv_URL;
-    char baseurl [] = "tidesandcurrents.noaa.gov";
+    char baseurl[] = "tidesandcurrents.noaa.gov";
     String Year;
     String tide_data = "";
-   
-    client.flush();
-    client.stop();
+
+
     if(client.connect(baseurl,80))
     {
       client.print( "GET ");
@@ -28,20 +29,20 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
       client.print( "&application=NOS.COOPS.TAC.WL");
       client.print( "&datum=MHHW");
       client.print( "&station=8723214");
-      client.print( "&time_zone=lst");
+      client.print( "&time_zone=gmt");
       client.print( "&units=metric");
       client.print( "&interval=h");
       client.print( "&format=csv");
       client.println();
+      last_connection_time = millis();
     }
     else
     {
       Serial.println("could not connect to server");
-      last_connection_time = millis();
       return -1;
     }
-    last_connection_time = millis();
-
+    Serial.print("Fetching took :");
+    Serial.println((millis()-timer));
 
     return 1;
   }
@@ -49,11 +50,17 @@ int CFETCH_TIDE_DATA::fetch_tide_data(WiFiClient & client,String weather_station
 
 int CFETCH_TIDE_DATA::parse_tide_data(WiFiClient & client)
 {
+
   int lines = 0;
+  if(client.available())
+  {
+  timer = millis();
+
   String day;
   String tide_data;
   while ( client.available())
   {
+    
     char c = client.read();
     tide_data += c;
     if(c == '\n')
@@ -90,15 +97,20 @@ int CFETCH_TIDE_DATA::parse_tide_data(WiFiClient & client)
       }
       tide_data = "";
     }
-  }    
+  }  
+    client.flush();
+    client.stop();
+    Serial.print("Parsing took :");
+    Serial.println((millis()-timer));
+  }
+
   return lines;
+  
 }
 
 
 void CFETCH_TIDE_DATA::print_event_data()
-{
-  if((millis() - last_print_time) > 25000)
-  {
+{ 
   Serial.println("Day , time(24hr) , level");
   Serial.println("*******************************");
 
@@ -118,16 +130,16 @@ void CFETCH_TIDE_DATA::print_event_data()
   Serial.print(event_minute);
 
   Serial.print(" , ");
-  Serial.println(event_level_data);
+  Serial.println(event_level_data,3);
 
   Serial.print("Max tide level: ");
-  Serial.println(max_tide_level);
+  Serial.println(max_tide_level,3);
 
   Serial.print("Min tide level: ");
-  Serial.println(min_tide_level);
+  Serial.println(min_tide_level,3);
 
   Serial.print("Last tide level:");
-  Serial.println(last_tide_level);
+  Serial.println(last_tide_level,3);
 
   Serial.print("Tide %:");
   Serial.println(tide_percent_level());
@@ -145,10 +157,7 @@ void CFETCH_TIDE_DATA::print_event_data()
       Serial.println("Tide unchanged since last reading!");
   }
 
-  Serial.println("*******************************");
-
-  last_print_time = millis();
-  }
+  Serial.println("*******************************"); 
 }
 
 
