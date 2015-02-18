@@ -36,6 +36,8 @@ int CTIDE_STATION::fetch_recent_predictive_tide_data(WiFiClient & client)
     }
     else
     {
+      client.flush();
+      client.stop();
       return -1;
     }
     connection_lock = true;
@@ -73,6 +75,8 @@ int CTIDE_STATION::fetch_predictive_tide_data_day(WiFiClient & client ,int & fir
     }
     else
     {
+    client.flush();
+    client.stop();
       return -1;
     }
     connection_lock = true;
