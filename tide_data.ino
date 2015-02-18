@@ -18,13 +18,12 @@
 #include <SPI.h>
 #include <WiFi.h>
 
-#include "CFETCH_TIDE_DATA.h"
+#include "CTIDE_STATION.h"
 char ssid[] = "";      //  your network SSID (name)
 char pass[] = "";   // your network password
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 int status = WL_IDLE_STATUS;
 
-CFETCH_TIDE_DATA tide_data(25000);
 // Initialize the Wifi client library
 WiFiClient client;
 // server address:
@@ -57,19 +56,32 @@ void setup() {
   }
   // you're connected now, so print out the status:
   printWifiStatus();
+
 }
 
+    CTIDE_STATION tide_data(25000,"8727520");
+boolean first_pass = true;
 void loop() {
      int year = 2015;
-     int month = 01;
-     int day = 30;
-     String station = "FLK1301_4";
-    
-    tide_data.fetch_tide_data(client,station,year);
+     int month = 02;
+     int day = 16;
+
+     if (first_pass)
+     {
+     tide_data.fetch_predictive_tide_data_day(client ,day,month,year);
+     first_pass = false;
+     }
+     else
+     {
+        tide_data.fetch_recent_predictive_tide_data(client);
+     }
     if(tide_data.parse_tide_data(client))
     {
       tide_data.print_event_data();
     }
+
+
+
 }
 
 // this method makes a HTTP connection to the server:
