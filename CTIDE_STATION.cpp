@@ -2,15 +2,18 @@
 //1.0.6
 CTIDE_STATION::CTIDE_STATION(int update_delay,String weather_station)
 {
-  WEATHER_STATION += "station=";
+  WEATHER_STATION += F("station=");
   WEATHER_STATION += weather_station;
-  WEATHER_STATION += "&";
+  WEATHER_STATION += F("&");
 
-  UNITS=  "units=metric&";
-  DATUM =  "datum=MLLW&";
-  TIME_ZONE = "time_zone=GMT&";
-  FORMAT = "format=csv";
+  UNITS=  F("units=metric&");
+  DATUM =  F("datum=MLLW&");
+  TIME_ZONE = F("time_zone=GMT&");
+  FORMAT = F("format=csv");
+  API = F("/api/datagetter?");
+  BASE_URL = F("tidesandcurrents.noaa.gov");
   connection_lock = false;
+
 clear_max_min_tide_level();
 }
 
@@ -18,14 +21,15 @@ int CTIDE_STATION::fetch_recent_predictive_tide_data(WiFiClient & client)
 {
   if(!client.connected() && !connection_lock)
   {
-    char baseurl[] = "tidesandcurrents.noaa.gov";
-
+    char baseurl[26];
+    BASE_URL.toCharArray(baseurl,26);
+    
     if(client.connect(baseurl,80))
     {
-          client.print("GET ");
-          client.print( "/api/datagetter?");
-          client.print( "product=predictions&");
-          client.print( "range=1&");
+          client.print(F("GET "));
+          client.print( API);
+          client.print( F("product=predictions&"));
+          client.print( F("range=1&"));
           client.print( DATUM);
           client.print( WEATHER_STATION);
           client.print( TIME_ZONE);
@@ -49,23 +53,27 @@ int CTIDE_STATION::fetch_predictive_tide_data_day(WiFiClient & client ,int & fir
 {
   if(!client.connected() && !connection_lock)
   {
-    char baseurl[] = "tidesandcurrents.noaa.gov";
-
+    
+    char baseurl[26];
+    BASE_URL.toCharArray(baseurl,26);
+    
     if(client.connect(baseurl,80))
     {
-     String begin_date("begin_date=");
+      String begin_date = "";
+      begin_date += F("begin_date=");
       begin_date += date_to_string(first_year,first_month,first_day);
-      begin_date += "&";
+      begin_date += F("&");
 
-      String end_date("end_date=");
+      String end_date = "";
+      end_date += F("end_date=");
       end_date += date_to_string(first_year,first_month,first_day + 1);
-      end_date += "&";
+      end_date += F("&");
 
-      client.print("GET ");
-      client.print( "/api/datagetter?");
-      client.print( "product=water_level&");
+      client.print(F("GET "));
+      client.print( API);
+      client.print( F("product=water_level&"));
       client.print( begin_date);
-      client.print(end_date);
+      client.print( end_date);
       client.print( DATUM);
       client.print( WEATHER_STATION);
       client.print( TIME_ZONE);
@@ -88,17 +96,18 @@ int CTIDE_STATION::parse_tide_data(WiFiClient & client)
 {
 
   int lines = 0;
-
+  char newline = '\n';
+  
   if(client.available() && connection_lock )
   {
 
-  String tide_data = " ";
+  String tide_data = "";
   while ( client.available())
   {
 
     char c = client.read();
     tide_data += c;
-    if(c == '\n')
+    if(c == newline)
     {
       String day = " ";
       lines++;
@@ -144,53 +153,53 @@ int CTIDE_STATION::parse_tide_data(WiFiClient & client)
 
 void CTIDE_STATION::print_event_data()
 {
-  Serial.println("Day , time(24hr) , level");
-  Serial.println("*******************************");
+ Serial.println(F("Day , time(24hr) , level"));
+ Serial.println(F("*******************************"));
 
   Serial.print(event_day_data);
 
-  Serial.print(" , ");
+  Serial.print(F(" , "));
   if(event_hour < 10)
   {
-      Serial.print('0');
+      Serial.print(F("0"));
   }
   Serial.print(event_hour);//day,time(mil),
-  Serial.print(':');
+  Serial.print(F(":"));
   if(event_minute < 10)
   {
-      Serial.print('0');
+      Serial.print(F("0"));
   }
   Serial.print(event_minute);
 
-  Serial.print(" , ");
+  Serial.print(F(" , "));
   Serial.println(event_level_data,3);
 
-  Serial.print("Max tide level: ");
+  Serial.print(F("Max tide level: "));
   Serial.println(max_tide_level,3);
 
-  Serial.print("Min tide level: ");
+  Serial.print(F("Min tide level: "));
   Serial.println(min_tide_level,3);
 
-  Serial.print("Last tide level:");
+  Serial.print(F("Last tide level:"));
   Serial.println(last_tide_level,3);
 
-  Serial.print("Tide %:");
+  Serial.print(F("Tide %:"));
   Serial.println(tide_percent_level());
 
   if(tide_rising_or_falling() == 0)
   {
-      Serial.println("Tide is falling!");
+      Serial.println(F("Tide is falling!"));
   }
   else if(tide_rising_or_falling() == 1)
   {
-      Serial.println("Tide is rising!");
+      Serial.println(F("Tide is rising!"));
   }
   else
   {
-      Serial.println("Tide unchanged since last reading!");
+      Serial.println(F("Tide unchanged since last reading!"));
   }
 
-  Serial.println("*******************************");
+  Serial.println(F("*******************************"));
 }
 
 CTIDE_STATION::~CTIDE_STATION()

@@ -31,7 +31,6 @@ class CTIDE_STATION
         */
         int parse_tide_data(WiFiClient & client);
 
-        int clock12_to_clock24(String time,String period); //returns 0 if falling 1 if rising and -1 if unknown
 
         String date_to_string(int  year, int  month,int day)
         {
@@ -150,7 +149,8 @@ class CTIDE_STATION
         String DATUM ;
         String TIME_ZONE ;
         String WEATHER_STATION ;
-
+        String API;
+        String BASE_URL;
         double max_tide_level;
         double min_tide_level;
         double last_tide_level;
