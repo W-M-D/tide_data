@@ -23,7 +23,7 @@ int CTIDE_STATION::fetch_recent_predictive_tide_data(WiFiClient & client)
   {
     char baseurl[26];
     BASE_URL.toCharArray(baseurl,26);
-    
+
     if(client.connect(baseurl,80))
     {
           client.print(F("GET "));
@@ -53,27 +53,17 @@ int CTIDE_STATION::fetch_predictive_tide_data_day(WiFiClient & client ,int & fir
 {
   if(!client.connected() && !connection_lock)
   {
-    
+
     char baseurl[26];
     BASE_URL.toCharArray(baseurl,26);
-    
+
     if(client.connect(baseurl,80))
     {
-      String begin_date = "";
-      begin_date += F("begin_date=");
-      begin_date += date_to_string(first_year,first_month,first_day);
-      begin_date += F("&");
-
-      String end_date = "";
-      end_date += F("end_date=");
-      end_date += date_to_string(first_year,first_month,first_day + 1);
-      end_date += F("&");
 
       client.print(F("GET "));
       client.print( API);
       client.print( F("product=water_level&"));
-      client.print( begin_date);
-      client.print( end_date);
+     client.print(F("date=today&"));
       client.print( DATUM);
       client.print( WEATHER_STATION);
       client.print( TIME_ZONE);
@@ -97,7 +87,7 @@ int CTIDE_STATION::parse_tide_data(WiFiClient & client)
 
   int lines = 0;
   char newline = '\n';
-  
+
   if(client.available() && connection_lock )
   {
 
@@ -116,9 +106,18 @@ int CTIDE_STATION::parse_tide_data(WiFiClient & client)
         last_tide_level = event_level_data;
 
         int tab_offset = 0 ;
-
+        SetYear(tide_data.toInt());
         tab_offset = tide_data.indexOf('-');
+        String month = "";
+        month += tide_data.charAt(tab_offset+1);
+        month += tide_data.charAt(tab_offset+2);
+        SetMonth(month.toInt());
+
         tab_offset = tide_data.indexOf('-',tab_offset + 1);
+        String day = "";
+        day += tide_data.charAt(tab_offset+1);
+        day += tide_data.charAt(tab_offset + 2);
+        SetDay(day.toInt());
 
         day += tide_data.charAt(tab_offset + 1);
         day += tide_data.charAt(tab_offset + 2);
@@ -185,7 +184,11 @@ void CTIDE_STATION::print_event_data()
 
   Serial.print(F("Tide %:"));
   Serial.println(tide_percent_level());
-
+     Serial.print(GetYear());
+     Serial.print('-');
+     Serial.print(GetMonth());
+     Serial.print('-');
+     Serial.println(GetDay());
   if(tide_rising_or_falling() == 0)
   {
       Serial.println(F("Tide is falling!"));

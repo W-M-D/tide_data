@@ -132,6 +132,13 @@ class CTIDE_STATION
         String Getstation_id() { return m_station_id; }
         void Setstation_id(String val) { m_station_id = val; }
 
+        int GetYear() { return m_Year; }
+        void SetYear(int val) { m_Year = val; }
+        uint8_t GetMonth() { return m_Month; }
+        void SetMonth(uint8_t val) { m_Month = val; }
+        uint8_t GetDay() { return m_Day; }
+        void SetDay(uint8_t val) { m_Day = val; }
+
         void clear_max_min_tide_level()
         {
               max_tide_level  = -100.00;
@@ -159,7 +166,9 @@ class CTIDE_STATION
         uint8_t event_minute;//time(mil)minute
         uint8_t event_hour;//time(mil) hour
         double event_level_data;// rate
-
+        int m_Year;
+        uint8_t m_Month;
+        uint8_t m_Day;
 };
 
 #endif // CTIDE_STATION_H

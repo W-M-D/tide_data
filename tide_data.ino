@@ -70,7 +70,7 @@ void loop() {
      {
 
      tide_data.fetch_predictive_tide_data_day(client ,day,month,year);
-            
+
      first_pass = false;
      }
      else
