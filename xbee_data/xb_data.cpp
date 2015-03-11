@@ -3,11 +3,12 @@
 xb_data::xb_data()
 {
     //ctor
-    start_char = '@';
-    end_char = '^';
+    weather_start_char = '@';
+    tide_start_char = '^';
     send_delay = 5;
     //t   ,h , s , d ,
-    //@,100,70,100,360,checksum,
+    //weather ==  @,100,70,100,360,checksum,
+    //tide == ^,tide_level,rising_or_falling,checksum,
 }
 
 int xb_data::read_incomming(SoftwareSerial &XBee)
@@ -18,37 +19,78 @@ int xb_data::read_incomming(SoftwareSerial &XBee)
   int temperature;
   int humidity;
   int wind_speed;
-  int wind_direction; 
-  int checksum = 0; 
+  int wind_direction;
+  int weather_checksum = 0;
+  int tide_checksum = 0;
+  int tide_level = 0;
+  int ck_a = 0;
   while(XBee.available())
   {
     char c =  XBee.read();
-    datas_string += c;
-  }
-  
-  start_char_offset = datas_string.lastIndexOf(start_char);
-  end_char_offset = datas_string.lastIndexOf(end_char);
- 
-  if(start_char_offset == -1 || datas_string.length() > 50) // check to see if there is a start char 
-  {
-    datas_string = "";
-    return -2;
-  }
-  if(end_char_offset > start_char_offset) // checks to see if the end char is after the start char
-  {
-    start_char_offset = datas_string.lastIndexOf(start_char,start_char_offset - 1);
-  }
-  
-  temperature = parse_CSV(datas_string, start_char_offset);
-  humidity = parse_CSV(datas_string, start_char_offset);
-  wind_speed = parse_CSV(datas_string, start_char_offset);
-  wind_direction = parse_CSV(datas_string, start_char_offset);
-  checksum = parse_CSV(datas_string, start_char_offset);
+    if(c == '@')
+    {
+        for(int i = 0 ; i < 5;)
+        {
+            c = XBee.read();
+            if(c==',')
+            {
+                 i++;
+            }
+            if(i == 1)
+            {
+                temperature=parse_CSV(Xbee);
+            }
+            if(i== 2)
+            {
+                humidity=parse_CSV(Xbee);
+            }
+            if(i==3)
+            {
+                wind_speed=parse_CSV(Xbee);
+            }
+            if(i==4)
+            {
+                wind_direction=parse_CSV(XBee);
+            }
+            if(i==5)
+            {
+                weather_checksum=parse_CSV(XBee);
+            }
+        }
+    }
+    else if(c == '^')
+    {
+        for(int i =0; i < 3;)
+        {
+            c = Xbee.read();
+            if(c==',')
+            {
+                 i++;
+            }
+            if(i == 1)
+            {
+                tide_level = parse_CSV(Xbee);
+                ck_a += tide_level;
+            }
+            if(i == 2)
+            {
+                tide_rising_or_falling = parse_CSV(XBee);
+            }
+            if(i == 3)
+            {
+                tide_checksum = parse_CSV(XBee);
+            }
+        }
 
-  
+    }
+
+  }
+
+
+
+
   if(check_checksum(temperature,humidity,wind_speed,wind_direction,checksum))
   {
-    datas_string = "";
     Settemperature(temperature);
     Sethumidity(humidity);
     Setwind_speed(wind_speed);
@@ -59,9 +101,9 @@ int xb_data::read_incomming(SoftwareSerial &XBee)
   {
     return -1;
   }
-  
+
 }
-  
+
 int xb_data::send_data(SoftwareSerial &XBee)
 {
   if(!XBee.available())
@@ -86,7 +128,7 @@ int xb_data::send_data(SoftwareSerial &XBee)
       delay(send_delay);
     }
   }
-    
+
 }
 
 
@@ -115,8 +157,8 @@ bool xb_data::check_checksum(int temperature,int humidity,int wind_speed,int win
    }
 }
 
-      
-  
+
+
 xb_data::~xb_data()
 {
     //dtor
