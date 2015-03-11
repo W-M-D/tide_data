@@ -1,13 +1,13 @@
-#ifndef CFETCH_TIDE_DATA_H
-#define CFETCH_TIDE_DATA_H
+#ifndef CTIDE_STATION_H
+#define CTIDE_STATION_H
 #include "Arduino.h"
 #include <WiFi.h>
 #include<stdlib.h>
 
-class CFETCH_TIDE_DATA
+class CTIDE_STATION
 {
     public:
-        CFETCH_TIDE_DATA(int update_delay);
+        CTIDE_STATION(int update_delay,String weather_station);
         /*
         Connects to tidesandcurrents.noaa.gov and pulls the tide rate data in CSV format takes A wifi client, a weather station ID
         the current year,month,and day.
@@ -15,7 +15,12 @@ class CFETCH_TIDE_DATA
         Returns -1 on failure to connect.
         Returns 1 on success
         */
-        int fetch_tide_data(WiFiClient & client,String weather_station,int  year);
+        int connect_tide_data(WiFiClient & client );
+        int fetch_current_tide_data(WiFiClient & client,String weather_station,int  year);
+
+        int fetch_recent_predictive_tide_data(WiFiClient & client);
+
+        int fetch_predictive_tide_data_day(WiFiClient & client ,int & first_day,int & first_month,int & first_year);
 
 
         /*
@@ -26,7 +31,41 @@ class CFETCH_TIDE_DATA
         */
         int parse_tide_data(WiFiClient & client);
 
-        int clock12_to_clock24(String time,String period); //returns 0 if falling 1 if rising and -1 if unknown
+
+        String date_to_string(int  year, int  month,int day)
+        {
+             String Date;
+             String Year;
+             String Month;
+             String Day;
+
+              if(day < 10)
+              {
+                Day += "0";
+              }
+              if (day > 31)
+              {
+               month++;
+              }
+              Day += day;
+
+              if(month < 10)
+              {
+                Month += "0";
+              }
+              if(month > 12)
+              {
+               year++;
+              }
+              Month += month;
+              Year += year;
+
+             Date += Year;
+             Date += Month;
+             Date += Day;
+
+              return Date;
+        }
 
         int tide_rising_or_falling()
         {
@@ -52,9 +91,13 @@ class CFETCH_TIDE_DATA
 
         void print_event_data();
 
-        float string_to_float(String parse_string,int  offset)
+        float string_to_float(const String & parse_string,int   offset)
         {
             char float_buffer[10];
+            if(!parse_string)
+            {
+            return 0.0;
+            }
             String rate= "";
             for(int u = offset; u < parse_string.length();u++)
             {
@@ -65,7 +108,8 @@ class CFETCH_TIDE_DATA
               rate += parse_string.charAt(u);
             }
             rate.toCharArray(float_buffer,10);
-            return(atof(float_buffer));
+            float temp  = atof(float_buffer);
+            return temp;
         }
 
         void parse_time(String parse_string,int offset)
@@ -82,39 +126,49 @@ class CFETCH_TIDE_DATA
         }
 
 
-        virtual ~CFETCH_TIDE_DATA();
+        virtual ~CTIDE_STATION();
         String Getweather_station() { return m_weather_station; }
         void Setweather_station(String val) { m_weather_station = val; }
         String Getstation_id() { return m_station_id; }
         void Setstation_id(String val) { m_station_id = val; }
-        int Getcurrent_lat() { return m_current_lat; }
-        void Setcurrent_lat(int val) { m_current_lat = val; }
-        int Getcurrent_lon() { return m_current_lon; }
-        void Setcurrent_lon(int val) { m_current_lon = val; }
 
+        int GetYear() { return m_Year; }
+        void SetYear(int val) { m_Year = val; }
+        uint8_t GetMonth() { return m_Month; }
+        void SetMonth(uint8_t val) { m_Month = val; }
+        uint8_t GetDay() { return m_Day; }
+        void SetDay(uint8_t val) { m_Day = val; }
 
+        void clear_max_min_tide_level()
+        {
+              max_tide_level  = -100.00;
+              min_tide_level = 100.00;
+        }
 
 
     protected:
     private:
         // tidesandcurrents.noaa.gov/noaacurrents/DownloadPredictions?fmt=csv&d=2015-01-26&id=FLK1301_4
-        String m_weather_station;
-        String m_station_id;
-        int m_current_lat;
-        int m_current_lon;
+        String m_weather_station ;
+        String m_station_id ;
+        String UNITS;
+        String FORMAT ;
+        String DATUM ;
+        String TIME_ZONE ;
+        String WEATHER_STATION ;
+        String API;
+        String BASE_URL;
         double max_tide_level;
         double min_tide_level;
         double last_tide_level;
-
+        bool connection_lock;
         uint8_t event_day_data;
         uint8_t event_minute;//time(mil)minute
         uint8_t event_hour;//time(mil) hour
         double event_level_data;// rate
-       
-        unsigned long timer = 0;
-
-        unsigned long last_connection_time;
-        unsigned long UPDATE_DELAY;
+        int m_Year;
+        uint8_t m_Month;
+        uint8_t m_Day;
 };
 
-#endif // CFETCH_TIDE_DATA_H
+#endif // CTIDE_STATION_H
