@@ -1,213 +1,166 @@
 #include "CTIDE_STATION.h"
 //1.0.6
-CTIDE_STATION::CTIDE_STATION(int update_delay,String weather_station)
+CTIDE_STATION::CTIDE_STATION(int update_delay,std::string weather_station)
 {
-  WEATHER_STATION += F("station=");
-  WEATHER_STATION += weather_station;
-  WEATHER_STATION += F("&");
+    WEATHER_STATION += "station=";
+    WEATHER_STATION += weather_station;
+    WEATHER_STATION += "&";
 
-  UNITS=  F("units=metric&");
-  DATUM =  F("datum=MLLW&");
-  TIME_ZONE = F("time_zone=GMT&");
-  FORMAT = F("format=csv");
-  API = F("/api/datagetter?");
-  BASE_URL = F("tidesandcurrents.noaa.gov");
-  connection_lock = false;
+    UNITS=  "units=metric&";
+    DATUM =  "datum=MLLW&";
+    TIME_ZONE = "time_zone=GMT&";
+    FORMAT = "format=csv";
+    API = "/api/datagetter?";
+    BASE_URL = "www.tidesandcurrents.noaa.gov";
 
-clear_max_min_tide_level();
+    clear_max_min_tide_level();
 }
 
-int CTIDE_STATION::fetch_recent_predictive_tide_data(WiFiClient & client)
+int CTIDE_STATION::fetch_recent_predictive_tide_data()
 {
-  if(!client.connected() && !connection_lock)
-  {
-    char baseurl[26];
-    BASE_URL.toCharArray(baseurl,26);
+    std::stringstream URL_string;
+    URL_string << API << "product=predictions&" << "range=1&" << DATUM << WEATHER_STATION << TIME_ZONE << UNITS << FORMAT;
+    send_string(URL_string.str());
 
-    if(client.connect(baseurl,80))
-    {
-          client.print(F("GET "));
-          client.print( API);
-          client.print( F("product=predictions&"));
-          client.print( F("range=1&"));
-          client.print( DATUM);
-          client.print( WEATHER_STATION);
-          client.print( TIME_ZONE);
-          client.print( UNITS);
-          client.print( FORMAT);
-          client.println();
-
-    }
-    else
-    {
-      client.flush();
-      client.stop();
-      return -1;
-    }
-    connection_lock = true;
     return 1;
-  }
+
 }
 
-int CTIDE_STATION::fetch_predictive_tide_data_day(WiFiClient & client ,int & first_day,int & first_month,int & first_year)
+
+
+int CTIDE_STATION::fetch_predictive_tide_data_day()
 {
-  if(!client.connected() && !connection_lock)
-  {
-
-    char baseurl[26];
-    BASE_URL.toCharArray(baseurl,26);
-
-    if(client.connect(baseurl,80))
-    {
-
-      client.print(F("GET "));
-      client.print( API);
-      client.print( F("product=water_level&"));
-     client.print(F("date=today&"));
-      client.print( DATUM);
-      client.print( WEATHER_STATION);
-      client.print( TIME_ZONE);
-      client.print( UNITS);
-      client.print( FORMAT);
-      client.println();
-    }
-    else
-    {
-    client.flush();
-    client.stop();
-      return -1;
-    }
-    connection_lock = true;
+    std::stringstream URL_string;
+    URL_string << API << "product=water_level&" << "date=today&" << DATUM << WEATHER_STATION << TIME_ZONE << UNITS << FORMAT;
+    send_string(URL_string.str());
     return 1;
-  }
 }
 
-int CTIDE_STATION::parse_tide_data(WiFiClient & client)
+bool CTIDE_STATION::send_string(const std::string & tide_URL)
+{
+    CURL * curl;
+    CURLcode res;
+    curl = curl_easy_init();
+    std::string tide_data;
+    std::string sending_string = "";
+    sending_string.append(BASE_URL);
+    sending_string.append(tide_URL);
+    unsigned int options;
+    if(curl)
+    {
+        curl_easy_setopt(curl,CURLOPT_NOSIGNAL ,1L );
+        curl_easy_setopt(curl,CURLOPT_FAILONERROR,1L );
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &tide_data);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_URL, sending_string.c_str());
+        /* Perform the request, res will get the return code */
+
+        res = curl_easy_perform(curl);
+        /* Check for errors */
+        if(res != CURLE_OK)
+        {
+            curl_easy_cleanup(curl);
+            return false;
+        }
+        /* always cleanup */
+        curl_easy_cleanup(curl);
+        parse_tide_data(tide_data);
+        return true;
+    }
+    /* always cleanup */
+    curl_easy_cleanup(curl);
+    return false;
+}
+
+
+int CTIDE_STATION::parse_tide_data(std::string tide_data)
 {
 
-  int lines = 0;
-  char newline = '\n';
+    int lines = 0;
+    char newline = '\n';
+    char startyear = '2';
+    std::cout << tide_data <<std::endl;
 
-  if(client.available() && connection_lock )
-  {
-
-  String tide_data = "";
-  while ( client.available())
-  {
-
-    char c = client.read();
-    tide_data += c;
-    if(c == newline)
+    for(unsigned int offset; offset < tide_data.length(); offset++)
     {
-      String day = " ";
-      lines++;
-      if(tide_data.startsWith("2"))
-      {
-        last_tide_level = event_level_data;
-
-        int tab_offset = 0 ;
-        SetYear(tide_data.toInt());
-        tab_offset = tide_data.indexOf('-');
-        String month = "";
-        month += tide_data.charAt(tab_offset+1);
-        month += tide_data.charAt(tab_offset+2);
-        SetMonth(month.toInt());
-
-        tab_offset = tide_data.indexOf('-',tab_offset + 1);
-        String day = "";
-        day += tide_data.charAt(tab_offset+1);
-        day += tide_data.charAt(tab_offset + 2);
-        SetDay(day.toInt());
-
-        day += tide_data.charAt(tab_offset + 1);
-        day += tide_data.charAt(tab_offset + 2);
-        event_day_data = day.toInt();
-
-        tab_offset = tide_data.indexOf(' ',tab_offset + 1);
-        parse_time(tide_data,tab_offset + 1 );
-
-        tab_offset = tide_data.indexOf(',',tab_offset +1);
-        event_level_data = string_to_float(tide_data,tab_offset + 1);
-
-        if(event_level_data > max_tide_level)
+        std::cout <<  offset <<tide_data.at(offset) <<std::endl;
+        if(tide_data.at(offset)==newline)
         {
-            max_tide_level = event_level_data;
-        }
-        if(event_level_data != 0.0 && event_level_data < min_tide_level)
-        {
-            min_tide_level = event_level_data;
-        }
+                lines++;
+                std::cout << lines << std::endl;
+                if(startyear == tide_data.at(offset + 1))
+                {
+                std::cout <<"First line" <<std::endl;
+                offset = tide_data.find_first_of(' ',offset);
+                parse_time(tide_data,offset);
+                offset = tide_data.find_first_of(',',offset + 1);
 
-      }
-      tide_data = "";
+
+                event_level_data = stof(tide_data,&offset);
+
+                if(event_level_data > max_tide_level)
+                {
+                    max_tide_level = event_level_data;
+                }
+                if(event_level_data != 0.0 && event_level_data < min_tide_level)
+                {
+                    min_tide_level = event_level_data;
+                }
+                }
+        }
     }
-  }
-   client.flush();
-   client.stop();
-   connection_lock = false;
- }
-  return lines;
 
 }
 
 void CTIDE_STATION::print_event_data()
 {
- Serial.println(F("Day , time(24hr) , level"));
- Serial.println(F("*******************************"));
+    std::cout << "Day , time(24hr) , level" << std::endl;
+    std::cout << "*******************************" << std::endl;
 
-  Serial.print(event_day_data);
+    std::cout << (event_day_data);
 
-  Serial.print(F(" , "));
-  if(event_hour < 10)
-  {
-      Serial.print(F("0"));
-  }
-  Serial.print(event_hour);//day,time(mil),
-  Serial.print(F(":"));
-  if(event_minute < 10)
-  {
-      Serial.print(F("0"));
-  }
-  Serial.print(event_minute);
+    std::cout << (" , ");
+    if(event_hour < 10)
+    {
+        std::cout << ("0");
+    }
+    std::cout << (event_hour);//day,time(mil),
+    std::cout << (":");
+    if(event_minute < 10)
+    {
+        std::cout << ("0");
+    }
 
-  Serial.print(F(" , "));
-  Serial.println(event_level_data,3);
+    std::cout << event_minute << " , " << event_level_data << std::endl;
 
-  Serial.print(F("Max tide level: "));
-  Serial.println(max_tide_level,3);
+    std::cout << "Max tide level: " << max_tide_level << std::endl;
 
-  Serial.print(F("Min tide level: "));
-  Serial.println(min_tide_level,3);
+    std::cout << "Min tide level: " << min_tide_level << std::endl;
 
-  Serial.print(F("Last tide level:"));
-  Serial.println(last_tide_level,3);
+    std::cout << "Last tide level:" << last_tide_level << std::endl;
 
-  Serial.print(F("Tide %:"));
-  Serial.println(tide_percent_level());
-     Serial.print(GetYear());
-     Serial.print('-');
-     Serial.print(GetMonth());
-     Serial.print('-');
-     Serial.println(GetDay());
-  if(tide_rising_or_falling() == 0)
-  {
-      Serial.println(F("Tide is falling!"));
-  }
-  else if(tide_rising_or_falling() == 1)
-  {
-      Serial.println(F("Tide is rising!"));
-  }
-  else
-  {
-      Serial.println(F("Tide unchanged since last reading!"));
-  }
+    std::cout << "Tide %:" << tide_percent_level() << std::endl;
 
-  Serial.println(F("*******************************"));
+    std::cout << GetYear() << '-' << GetMonth() << '-' << GetDay() << std::endl;
+    if(tide_rising_or_falling() == 0)
+    {
+        std::cout << "Tide is falling!" << std::endl;
+    }
+    else if(tide_rising_or_falling() == 1)
+    {
+        std::cout << "Tide is rising!" << std::endl;
+    }
+    else
+    {
+        std::cout << "Tide unchanged since last reading!" << std::endl;
+    }
+
+    std::cout << "*******************************" << std::endl;
 }
 
 CTIDE_STATION::~CTIDE_STATION()
 {
-  //dtor
+    //dtor
 }
 
 
