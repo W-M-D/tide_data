@@ -36,11 +36,18 @@ public:
     Returns how many events were parsed
     */
 
-    void parse_time(std::string parse_string,std::string::size_type offset)
+    void parse_time(std::string parse_string,std::string::size_type & offset)
     {
-        event_hour = std::stoi (parse_string, &offset);
-        offset = offset + 3;
-        event_minute = std::stoi(parse_string, &offset);
+        std::string hour =" ";
+        hour += parse_string.at(offset );
+        hour += parse_string.at(offset + 1);
+
+        std::string mins = " ";
+        mins += parse_string.at(offset+3);
+        mins += parse_string.at(offset+4);
+
+        event_hour = std::stoi(hour);
+        event_minute = std::stoi(mins);
     }
     int parse_tide_data(std::string);
     bool send_string(const std::string & tide_URL);
@@ -179,8 +186,8 @@ private:
     double min_tide_level;
     double last_tide_level;
     uint8_t event_day_data;
-    uint8_t event_minute;//time(mil)minute
-    uint8_t event_hour;//time(mil) hour
+    int event_minute;//time(mil)minute
+    int event_hour;//time(mil) hour
     double event_level_data;// rate
     int m_Year;
     uint8_t m_Month;

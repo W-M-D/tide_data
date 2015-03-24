@@ -75,28 +75,36 @@ bool CTIDE_STATION::send_string(const std::string & tide_URL)
 
 int CTIDE_STATION::parse_tide_data(std::string tide_data)
 {
-
     int lines = 0;
     char newline = '\n';
     char startyear = '2';
-    std::cout << tide_data <<std::endl;
+    char c = ' ';
+    std::string tide_event;
 
-    for(unsigned int offset; offset < tide_data.length(); offset++)
+    for( int tide_data_offset = 0; tide_data_offset < tide_data.length(); tide_data_offset++)
     {
-        std::cout <<  offset <<tide_data.at(offset) <<std::endl;
-        if(tide_data.at(offset)==newline)
+        tide_event += tide_data.at(tide_data_offset);
+        c = tide_data.at(tide_data_offset);
+       /* std::cout << "Tide data offset = "<< tide_data_offset << std::endl;
+        std::cout << "Lines = " << lines << std::endl;
+        std::cout << c << std::endl;
+    */
+        if(c == '\n')
         {
-                lines++;
-                std::cout << lines << std::endl;
-                if(startyear == tide_data.at(offset + 1))
+                c = tide_event.front();
+               lines++;
+               last_tide_level = event_level_data;
+                if(c == '2')
                 {
-                std::cout <<"First line" <<std::endl;
-                offset = tide_data.find_first_of(' ',offset);
-                parse_time(tide_data,offset);
-                offset = tide_data.find_first_of(',',offset + 1);
+                std::string::size_type offset = 0;
+                offset = tide_event.find_first_of(' ',offset);
 
+                offset++;
+                parse_time(tide_event,offset);
 
-                event_level_data = stof(tide_data,&offset);
+                offset = tide_event.find_first_of(',',offset );
+                offset++;
+                event_level_data = stof(tide_event.substr(offset));
 
                 if(event_level_data > max_tide_level)
                 {
@@ -107,6 +115,7 @@ int CTIDE_STATION::parse_tide_data(std::string tide_data)
                     min_tide_level = event_level_data;
                 }
                 }
+                tide_event = "";
         }
     }
 
