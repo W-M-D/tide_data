@@ -13,7 +13,13 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="include" />
+					<Add directory="src" />
 				</Compiler>
+				<Linker>
+					<Add directory="include" />
+					<Add directory="src" />
+				</Linker>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/tide_data_rbpi" prefix_auto="1" extension_auto="1" />
@@ -38,7 +44,9 @@
 		</Linker>
 		<Unit filename="CTIDE_STATION.cpp" />
 		<Unit filename="CTIDE_STATION.h" />
+		<Unit filename="include/CUART_SERIAL.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="src/CUART_SERIAL.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />
