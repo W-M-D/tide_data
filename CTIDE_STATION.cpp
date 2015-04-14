@@ -31,7 +31,7 @@ int CTIDE_STATION::fetch_recent_predictive_tide_data()
 int CTIDE_STATION::fetch_predictive_tide_data_day()
 {
     std::stringstream URL_string;
-    URL_string << API << "product=water_level&" << "date=today&" << DATUM << WEATHER_STATION << TIME_ZONE << UNITS << FORMAT;
+    URL_string << API << "product=predictions&" << "date=today&" << DATUM << WEATHER_STATION << TIME_ZONE << UNITS << FORMAT;
     send_string(URL_string.str());
     return 1;
 }
@@ -45,6 +45,7 @@ bool CTIDE_STATION::send_string(const std::string & tide_URL)
     std::string sending_string = "";
     sending_string.append(BASE_URL);
     sending_string.append(tide_URL);
+    std::cout <<  std::endl <<sending_string << std::endl;
     unsigned int options;
     if(curl)
     {
@@ -89,7 +90,9 @@ int CTIDE_STATION::parse_tide_data(std::string tide_data)
         std::cout << "Lines = " << lines << std::endl;
         std::cout << c << std::endl;
     */
-        if(c == '\n')
+            std::cout << c ;
+
+        if(c == '\n' )
         {
                 c = tide_event.front();
                lines++;
