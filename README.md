@@ -6,6 +6,8 @@ built for arduino1.6 and linux.
 To build for linux just clone the rbpi branch and run 
 
 autoreconf
+then run 
 ./configure
+and finally 
 make
 
