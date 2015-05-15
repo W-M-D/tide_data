@@ -1,4 +1,4 @@
-#include "../include/CUART_SERIAL.h"
+#include "CUART_SERIAL.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
