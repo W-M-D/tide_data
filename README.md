@@ -11,3 +11,7 @@ then run
 and finally 
 make
 
+If you have multiarch enabled you can cross compile.However, you must install the libcurl4-gnutls-dev for the arch you want to compile. For example, if you want to compile for armel you need to enable armel in multiarch remove your current libcurl4-gnutls-dev and install libcurl4-gnutls-dev:armel. You can then run 
+autoreconf
+./configure --host=arm-linux-gnueabi -prefix=/usr/bin/arm-linux-gnueabi 
+make.
